@@ -1,4 +1,4 @@
-package com.raissa.listaposts_raissa;
+package com.raissa.listaposts_raissa.models
 
 sealed class SuspendState<out SuccesDataType>{
 

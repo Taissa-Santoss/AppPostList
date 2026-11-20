@@ -1,4 +1,4 @@
-package com.raissa.listaposts_raissa.ui.theme
+package com.raissa.listaposts_raissa.ui.theme.theme
 
 import androidx.compose.ui.graphics.Color
 
