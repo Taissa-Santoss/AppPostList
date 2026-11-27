@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,12 +60,12 @@ class MainActivity : ComponentActivity() {
                     entryProvider = {key ->
                         when (key){
                             is AppRoute.PostList -> NavEntry(key){
-                                PostListPage { post ->
+                                PostListPage(viewModel()) { post ->
                                     backStack.add(AppRoute.PostDetail(post.postId))
                                 }
                             }
                             is AppRoute.PostDetail -> NavEntry(key) {
-                                PostDetailPage( key.id)
+                                PostDetailPage(viewModel(), key.id)
                             }
                             else -> NavEntry(key) {
                                 Text("404: Rota não encontrada")

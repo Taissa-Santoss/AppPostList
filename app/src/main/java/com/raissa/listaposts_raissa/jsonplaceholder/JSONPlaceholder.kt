@@ -9,7 +9,7 @@ object JSONPlaceholder {
     @Serializable
     data class PostDetail(
         val id: Int,
-        val UserId: Int,
+        val userId: Int,
         val title: String,
         val body: String,
     ) {

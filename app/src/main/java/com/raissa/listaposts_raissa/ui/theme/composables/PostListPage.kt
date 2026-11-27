@@ -22,12 +22,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.raissa.listaposts_raissa.jsonplaceholder.JSONPlaceholder
 import com.raissa.listaposts_raissa.models.PostListItem
 import com.raissa.listaposts_raissa.models.SuspendState
+import com.raissa.listaposts_raissa.viewmodels.PostListPageViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,22 +38,12 @@ import java.net.URL
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostListPage(onPostClick: (PostListItem) -> Unit) {
-    var state by remember { mutableStateOf<SuspendState<List<PostListItem>>>(SuspendState.Loading) }
+fun PostListPage(viewModel: PostListPageViewModel, onPostClick: (PostListItem) -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val isLoading = state is SuspendState.Loading
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        state = try {
-            SuspendState.Success(
-                data = downloadPosts()
-            )
-        } catch (_: Exception) {
-            SuspendState.Error(
-                message = "Não foi possivel carregar a lista"
-            )
-
-        }
+        viewModel.download()
     }
 
     Scaffold(
@@ -64,19 +56,7 @@ fun PostListPage(onPostClick: (PostListItem) -> Unit) {
                         // se isloading for falso, botão retry fica cinza, nao deixa carregar
                         enabled = !isLoading,
                         onClick = {
-                            scope.launch {
-                                state = SuspendState.Loading
-                                state = try {
-                                    SuspendState.Success(
-                                        data = downloadPosts()
-                                    )
-                                } catch (_: Exception) {
-                                    SuspendState.Error(
-                                        message = "Não foi possivel atualizar a lista"
-                                    )
-
-                                }
-                            }
+                            viewModel.download()
                         }
                     ){
                         Text("Retry")
@@ -131,7 +111,3 @@ private fun PostListTile(post: PostListItem, onClick: ()-> Unit) {
 }
 
 
-private suspend fun downloadPosts(): List<PostListItem> = withContext(Dispatchers.IO) {
-    val jsonText = URL("https://jsonplaceholder.typicode.com/posts").readText()
-    Json.decodeFromString<List<JSONPlaceholder.PostListItem>>(jsonText).map {it.toPostListItem()}
-}

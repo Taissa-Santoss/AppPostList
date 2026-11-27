@@ -22,10 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.raissa.listaposts_raissa.jsonplaceholder.JSONPlaceholder
 import com.raissa.listaposts_raissa.models.PostDetail
 import com.raissa.listaposts_raissa.models.PostDetailComment
 import com.raissa.listaposts_raissa.models.SuspendState
+import com.raissa.listaposts_raissa.viewmodels.PostDetailPageViewModel
+import com.raissa.listaposts_raissa.viewmodels.PostListPageViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -33,21 +36,12 @@ import kotlinx.serialization.json.Json
 import java.net.URL
 
 @Composable
-fun PostDetailPage(postId: String) {
-    var state by remember { mutableStateOf<SuspendState<PostDetail>>(SuspendState.Loading) }
+fun PostDetailPage(viewModel: PostDetailPageViewModel, postId: String) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
 
     LaunchedEffect(postId) {
-        state = SuspendState.Loading
-        state = try {
-            SuspendState.Success(
-                data = fetchData(postId)
-            )
-        } catch (_: Exception) {
-            SuspendState.Error(
-                message = "Não foi possivel carregar o post com o id $postId"
-            )
-        }
+        viewModel.downloadPostDetail(postId)
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -117,31 +111,6 @@ fun PostDetailPage(postId: String) {
 
 
 
-private suspend fun fetchData(postId: String): PostDetail = withContext(Dispatchers.IO){
-    require(postId.toIntOrNull() != null) {"Invalid postId"}
-    val jsonText = URL("https://jsonplaceholder.typicode.com/posts/$postId").readText()
-    val apiPostDetail = Json.decodeFromString<JSONPlaceholder.PostDetail>(jsonText)
-    PostDetail(
-        id = apiPostDetail.id.toString(),
-        title = apiPostDetail.title,
-        body = apiPostDetail.body,
-        comments = fetchComments(postId)
-    )
 
-}
-
-private suspend fun fetchComments(postId: String): List<PostDetailComment> =
-    withContext(Dispatchers.IO) {
-        require(postId.toIntOrNull() != null) { "Invalid postId" }
-        val jsonText = URL("https://jsonplaceholder.typicode.com/posts/$postId/comments").readText()
-        Json.decodeFromString<List< JSONPlaceholder.PostDetailComment>>(jsonText).map {
-            PostDetailComment(
-                id = it.id.toString(),
-                title = it.name,
-                commenterEmail = it.email,
-                body = it.body
-            )
-        }
-    }
 
 
